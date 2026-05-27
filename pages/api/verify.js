@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     console.log(`>>> [正在校验] 收到前端请求 -> txid: ${txid}, 用户输入的PIN: ${pin}`);
     
     try {
-        const verifyUrl = `https://m.bolo2vas102.click.click/c/pin/verify?txid=${txid}&pin=${pin}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
+        const verifyUrl = `https://m.bolo2vas102.click/c/pin/verify?txid=${txid}&pin=${pin}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
         const cpResponse = await axios.get(verifyUrl);
 
         // 🔥 核心：把 PDF 文档里广告主返回的每一个字，原封不动打印到 Vercel 的 Message 栏里！
