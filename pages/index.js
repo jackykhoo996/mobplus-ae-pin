@@ -119,7 +119,7 @@ export default function Home() {
               disabled={loading}
               style={{ width: '90%', padding: '16px', backgroundColor: '#71c21b', color: '#000', border: 'none', borderRadius: '8px', fontSize: '20px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 15px rgba(113, 194, 27, 0.4)' }}
             >
-              {loading ? 'انتظر...' : 'اشترك واربح الآن'}
+              {loading ? 'انتظر...' : 'اربح الآن'}
             </button>
             <p style={{ color: '#666', fontSize: '11px', marginTop: '15px', lineHeight: '1.4' }}>
               بالضغط على الزر، أنت توافق على الشروط والأحكام. سيتم خصم رسوم الاشتراك من رصيدك تلقائياً.
