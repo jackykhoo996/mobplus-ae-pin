@@ -24,12 +24,12 @@ export default function Home() {
       body: JSON.stringify({ msisdn, click_id: clickId })
     }).then(r => r.json());
 
-    if (res.success) {
+ if (res.success) {
       setTxid(res.txid);
       setStep(2);
       setMessage('PIN 码已发送至您的手机！');
     } else {
-      setMessage('请求失败，请重试');
+      setMessage(`❌ 失败原因: ${res.error}`); // 直接显示后台传来的真实死因
     }
   };
 
