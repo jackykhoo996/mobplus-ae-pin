@@ -119,7 +119,7 @@ export default function Home() {
             <div style={styles.phoneBox}>
               <input
                 type="tel"
-                placeholder="54XXXXXXX"
+                placeholder="5XXXXXXXX"
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value.replace(/\D/g, ""))}
                 style={styles.input}
