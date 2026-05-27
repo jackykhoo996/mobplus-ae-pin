@@ -256,7 +256,7 @@ const styles = {
     border: "3px solid #cfd1d8",
     borderRadius: "15px",
     overflow: "hidden",
-    background: "white",
+    background: "#ffffff", // 👈 确保整个组合框背景为纯白
     height: "60px",
     direction: "ltr"
   },
@@ -267,7 +267,8 @@ const styles = {
     textAlign: "center",
     fontWeight: "bold",
     outline: "none",
-    color: "#333"
+    backgroundColor: "#ffffff", // 👈 强行设置输入框背景为纯白
+    color: "#000000" // 👈 强行设置用户输入的 msisdn 数字为纯黑
   },
   country: {
     width: "70px",
