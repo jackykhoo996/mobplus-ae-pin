@@ -87,7 +87,7 @@ export default function Home() {
     <div dir="rtl" style={{ fontFamily: '"Tajawal", "Cairo", Arial, sans-serif', textAlign: 'center', padding: '20px', backgroundColor: '#111111', minHeight: '100vh', color: '#ffffff' }}>
       
       <div style={{ backgroundColor: '#202020', padding: '10px', fontSize: '12px', color: '#ffd700', borderRadius: '5px', marginBottom: '20px', maxWidth: '450px', margin: '0 auto 20px auto', border: '1px solid #333' }}>
-        ⚡️ فاز (أحمد م.) للتو بجهاز iPhone 15 Pro Max! 
+        ⚡️ فاز (أحمد م.) للتو بجهاز iPhone 17 Pro Max! 
       </div>
 
       <div style={{ maxWidth: '450px', margin: '0 auto', background: 'linear-gradient(145deg, #222222, #1a1a1a)', padding: '35px 25px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '1px solid #333' }}>
@@ -95,7 +95,7 @@ export default function Home() {
         <h1 style={{ color: '#ffd700', margin: '0 0 15px 0', fontSize: '28px', textShadow: '0 2px 4px rgba(255, 215, 0, 0.3)' }}>
           🎁 السحب السنوي الأكبر! 🎁
         </h1>
-        <p style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 5px 0' }}>اربح <span style={{ color: '#ffd700' }}>iPhone 15 Pro Max</span> الجديد</p>
+        <p style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 5px 0' }}>اربح <span style={{ color: '#ffd700' }}>iPhone 17 Pro Max</span> الجديد</p>
         <p style={{ color: '#888', fontSize: '14px', marginBottom: '25px' }}>*عرض حصري لمشتركي <span style={{color: '#71c21b', fontWeight: 'bold'}}>Etisalat</span> في الإمارات</p>
 
         {step === 1 && (
