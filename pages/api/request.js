@@ -19,10 +19,15 @@ export default async function handler(req, res) {
         if (cpResponse.data.stateCode === 0) {
             const txid = cpResponse.data.txid; // 获取交易号 [cite: 17]
             
-            // 3. 将数据记录到 Supabase (防止漏单，方便后续查账)
-            await supabase.from('leads').insert([
-                { click_id: click_id || 'test_click', msisdn: msisdn, txid: txid, carrier: 'Etisalat', status: 'pending' }
-            ]);
+            // 3. 将数据记录到 Supabase
+         const { error: dbError } = await supabase.from('leads').insert([
+             { click_id: click_id || 'test_click', msisdn: msisdn, txid: txid, carrier: 'Etisalat', status: 'pending' }
+         ]);
+
+         // 如果数据库写入失败，直接把死因扔给前端！
+         if (dbError) {
+             return res.status(400).json({ success: false, error: '数据库错误: ' + dbError.message });
+         }
 
             // 4. 告诉前端页面：成功啦，请进入输入 PIN 码的界面！
             res.status(200).json({ success: true, txid: txid });
