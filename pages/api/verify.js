@@ -1,38 +1,50 @@
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 
-// 连接你的 Supabase 数据库
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
     
-    // 接收前端传过来的 交易号(txid)、用户输入的验证码(pin) 和 click_id
     const { txid, pin, click_id } = req.body;
     
+    // 在日志里记录前端传过来的测试数据，方便对账
+    console.log(`>>> [正在校验] 收到前端请求 -> txid: ${txid}, 用户输入的PIN: ${pin}`);
+    
     try {
-        // 1. 呼叫 CP 的 PIN Verify API
-        const verifyUrl = `https://m.bolo2vas102.click/c/pin/verify?txid=${txid}&pin=${pin}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
+        const verifyUrl = `https://m.bolo2vas102.click.click/c/pin/verify?txid=${txid}&pin=${pin}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
         const cpResponse = await axios.get(verifyUrl);
 
-        // 2. CP 官方文档说明：stateCode 为 0 代表验证成功并扣费 [cite: 37]
+        // 🔥 核心：把 PDF 文档里广告主返回的每一个字，原封不动打印到 Vercel 的 Message 栏里！
+        console.log(">>> [CP 广告主 Verify 响应结果]:", cpResponse.data);
+
         if (cpResponse.data.stateCode === 0) {
+            console.log(`>>> 🎉 校验成功！准备更新数据库并回传 Voluum -> txid: ${txid}`);
             
-            // 3. 交易成功！在数据库里把这条记录的状态更新为 success
+            // 更新数据库
             await supabase.from('leads').update({ status: 'success' }).eq('txid', txid);
 
-            // 4. 重头戏：给 Voluum 发送隐藏回传，告诉它这单赚了 $3.5！
+            // 给 Voluum 发送隐藏回传
             if (click_id && click_id !== 'test_click') {
                 const postbackUrl = `http://citcycle-sative.com/postback?cid=${click_id}&payout=3.5`;
+                console.log(`>>> [发送 Postback] 正在请求 Voluum: ${postbackUrl}`);
                 await axios.get(postbackUrl);
             }
 
-            // 5. 告诉前端页面：全部搞定，给用户显示抽奖成功的界面！
             res.status(200).json({ success: true });
         } else {
-            res.status(400).json({ success: false, error: 'Invalid PIN' });
+            // 🔥 广告主拒绝了，把 PDF 文档里的状态码和错误信息包装好
+            console.log(`>>> ❌ 广告主拒绝了该验证码。状态码: ${cpResponse.data.stateCode}, 提示: ${cpResponse.data.msg}`);
+            
+            res.status(400).json({ 
+                success: false, 
+                error: `CP_VERIFY_FAILED`,
+                cpStateCode: cpResponse.data.stateCode,
+                cpMsg: cpResponse.data.msg 
+            });
         }
     } catch (error) {
+        console.log(">>> 🔥 [服务器严重崩溃] Verify 接口报错:", error.message);
         res.status(500).json({ success: false, error: 'Server Error' });
     }
 }
