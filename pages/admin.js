@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// 连接你现有的 Supabase 数据库
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -11,14 +10,13 @@ export default function AdminDashboard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 抓取数据库里的记录
   const fetchLeads = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('leads')
       .select('*')
-      .order('created_at', { ascending: false }) // 最新进来的排在最上面
-      .limit(50); // 只显示最近50条
+      .order('created_at', { ascending: false })
+      .limit(50);
     
     if (data) setLeads(data);
     setLoading(false);
@@ -28,7 +26,6 @@ export default function AdminDashboard() {
     fetchLeads();
   }, []);
 
-  // 渲染不同颜色的炫酷状态标签
   const renderStatusBadge = (status) => {
     let color, bgColor, borderColor;
     if (status === 'success') {
@@ -58,7 +55,7 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ backgroundColor: '#0f0f11', minHeight: '100vh', color: '#e0e0e0', padding: '40px', fontFamily: '"Courier New", Courier, monospace' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <h1 style={{ color: '#fff', fontSize: '28px', margin: 0 }}>🛡️ TRAFFIC MONITOR</h1>
@@ -77,8 +74,8 @@ export default function AdminDashboard() {
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Time</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Phone (MSISDN)</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>TXID (CP Ref)</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Click ID</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Status</th>
+                <th style={{ padding: '15px 20px', fontWeight: '600' }}>CP Response</th>
               </tr>
             </thead>
             <tbody>
@@ -93,11 +90,11 @@ export default function AdminDashboard() {
                   <td style={{ padding: '15px 20px', fontSize: '13px', color: '#a1a1aa', fontFamily: 'monospace' }}>
                     {lead.txid || '-'}
                   </td>
-                  <td style={{ padding: '15px 20px', fontSize: '13px', color: '#a1a1aa' }}>
-                    {lead.click_id.substring(0, 10)}...
-                  </td>
                   <td style={{ padding: '15px 20px' }}>
                     {renderStatusBadge(lead.status)}
+                  </td>
+                  <td style={{ padding: '15px 20px', fontSize: '13px', color: '#ff9800' }}>
+                    {lead.cp_response || 'Success'}
                   </td>
                 </tr>
               ))}
@@ -109,8 +106,5 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
-        
       </div>
     </div>
-  );
-}
