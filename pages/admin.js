@@ -18,7 +18,7 @@ export default function AdminDashboard() {
       .order('created_at', { ascending: false })
       .limit(50);
     
-    // 👈 就是这行！告诉 Vercel 我们用到 error 了，不让它报错
+    // 解决未使用变量的 Vercel 报错
     if (error) console.error("读取数据库失败:", error); 
     
     if (data) setLeads(data);
@@ -111,3 +111,5 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+  );
+}
