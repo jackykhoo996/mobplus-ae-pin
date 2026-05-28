@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   try {
     // 1. 呼叫 CP 广告主的 PIN Request 接口获取验证码
     // 注意：这里用的是你之前发我的完整官方请求 URL
-    const cpUrl = `https://m.bolo2vas102.click.click/c/pin/request?msisdn=${msisdn}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
+    const cpUrl = `https://m.bolo2vas102.click/c/pin/request?msisdn=${msisdn}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
     const cpResponse = await axios.get(cpUrl);
 
     // 在 Vercel 后台打印一下，方便对账
