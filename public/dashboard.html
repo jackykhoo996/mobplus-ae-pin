@@ -1,0 +1,302 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MVAS Precision Funnel Monitor</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { overflow-x: hidden; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, -apple-system, monospace;
+      font-size: 13px;
+      min-height: 100vh;
+    }
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #e6edf3;
+      letter-spacing: 0.5px;
+    }
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, #1f6feb, #388bfd);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .header-stats { display: flex; gap: 28px; align-items: flex-start; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 22px; font-weight: 700; line-height: 1; }
+    .stat-lbl { font-size: 9px; color: #8b949e; margin-top: 3px; letter-spacing: 0.6px; white-space: nowrap; }
+    .stat:nth-child(1) .stat-val { color: #58a6ff; }
+    .stat:nth-child(2) .stat-val { color: #bc8cff; }
+    .stat:nth-child(3) .stat-val { color: #3fb950; }
+    .stat:nth-child(4) .stat-val { color: #79c0ff; }
+    .stat:nth-child(5) .stat-val { color: #bc8cff; }
+    .stat:nth-child(6) .stat-val { color: #3fb950; }
+
+    /* ── OPERATOR CARDS ── */
+    .operators { display: flex; gap: 10px; padding: 14px 20px; flex-wrap: wrap; }
+    .op-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px 18px; min-width: 180px; }
+    .op-name { font-size: 12px; font-weight: 700; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .op-name.etisalat { color: #3fb950; }
+    .op-row { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 3px; font-size: 12px; }
+    .op-row .lbl { color: #8b949e; }
+    .op-row .val { color: #e6edf3; font-weight: 600; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; padding: 0 20px; border-bottom: 1px solid #30363d; background: #0d1117; }
+    .tab-btn { padding: 10px 16px; cursor: pointer; color: #8b949e; font-size: 13px; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px; background: none; border: none; }
+    .tab-btn:hover { color: #c9d1d9; }
+    .tab-btn.active { color: #e3b341; border-bottom-color: #e3b341; }
+    
+    /* ── FILTER BAR ── */
+    .filter-bar { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: #0d1117; border-bottom: 1px solid #21262d; }
+    .filter-lbl { color: #8b949e; font-size: 12px; }
+    .filter-bar input[type="date"] { background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 4px 10px; color: #e6edf3; font-size: 12px; color-scheme: dark; }
+    .btn { padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-apply { background: #1f6feb; color: #fff; }
+    .btn-clear { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+    
+    /* ── TABLE ── */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .table-wrap { padding: 0 20px 24px; width: 100%; overflow-x: auto; }
+    .table-info { text-align: left; padding: 10px 5px; color: #8b949e; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th { padding: 8px 10px; text-align: left; color: #8b949e; font-size: 11px; z-index: 1; background: #161b22; border-bottom: 1px solid #30363d; }
+    tbody tr { border-bottom: 1px solid #161b22; }
+    tbody tr:hover { background: #161b22; }
+    tbody td { padding: 9px 10px; vertical-align: middle; color: #e6edf3; }
+    .td-id { color: #8b949e; }
+    .td-date { color: #8b949e; font-size: 11px; }
+    .td-msisdn { color: #79c0ff; }
+    .td-uuid { font-size: 11px; color: #8b949e; word-break: break-all; }
+    
+    /* Response 工业美化样式 */
+    .td-response { font-size: 11px; color: #8b949e; max-width: 300px; font-family: monospace; word-break: break-all; color: #c9d1d9; background: #21262d; padding: 3px 6px !important; border-radius: 4px; }
+    
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+    .badge-success { background: rgba(63,185,80,0.12); color: #3fb950; border: 1px solid rgba(63,185,80,0.35); }
+    .badge-error { background: rgba(248,81,73,0.12); color: #f85149; border: 1px solid rgba(248,81,73,0.35); }
+    .badge-pending { background: rgba(227,179,65,0.12); color: #e3b341; border: 1px solid rgba(227,179,65,0.35); }
+    .empty-row td { text-align: center; padding: 40px 0; color: #484f58; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo"><div class="logo-icon">📱</div>Logs Dashboard</div>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-val" id="s-pin-requests">0</div><div class="stat-lbl">PIN REQUESTS</div></div>
+    <div class="stat"><div class="stat-val" id="s-unique-msisdn">0</div><div class="stat-lbl">UNIQUE MSISDN</div></div>
+    <div class="stat"><div class="stat-val" id="s-otp-sent">0</div><div class="stat-lbl">OTP SENT</div></div>
+    <div class="stat"><div class="stat-val" id="s-pin-attempts">0</div><div class="stat-lbl">PIN ATTEMPTS</div></div>
+    <div class="stat"><div class="stat-val" id="s-pin-unique">0</div><div class="stat-lbl">PIN UNIQUE</div></div>
+    <div class="stat"><div class="stat-val" id="s-pin-verified">0</div><div class="stat-lbl">PIN VERIFIED</div></div>
+  </div>
+</header>
+
+<div class="operators">
+  <div class="op-card">
+    <div class="op-name etisalat">ETISALAT</div>
+    <div class="op-row"><span class="lbl">Requests</span><span class="val" id="et-req">0</span></div>
+    <div class="op-row"><span class="lbl">Success</span><span class="val" id="et-suc" style="color: #3fb950;">0</span></div>
+    <div class="op-row"><span class="lbl">PIN att.</span><span class="val" id="et-att" style="color: #ffa657;">0</span></div>
+    <div class="op-row"><span class="lbl">Verified</span><span class="val" id="et-ver" style="color: #58a6ff;">0</span></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" id="tab-btn-request" onclick="switchTab('request')">📱 pin_request (<span id="count-request">0</span>)</button>
+  <button class="tab-btn" id="tab-btn-verify" onclick="switchTab('verify')">🔑 pin_verify (<span id="count-verify">0</span>)</button>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-lbl">Filter:</span>
+  <input type="date" id="filter-from" />
+  <span class="sep">–</span>
+  <input type="date" id="filter-to" />
+  <button class="btn btn-apply" onclick="applyFilter()">Apply</button>
+  <button class="btn btn-clear" onclick="clearFilter()">Clear</button>
+</div>
+
+<div class="table-wrap">
+  <div class="table-info" id="table-info-summary">Page 1 of 1 (0 records)</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:40px; text-align:center; color:#484f58;">#</th>
+        <th>DATE</th>
+        <th>TELCO</th>
+        <th>MSISDN</th>
+        <th>VOLUUM CLICK_ID</th>
+        <th>TXID (CP REFERENCE)</th>
+        <th>STATUS</th>
+        <th>CP RESPONSE</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-logs">
+      <tr class="empty-row"><td colspan="8">No records found</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  let globalData = [];
+  let filteredData = [];
+  let currentTab = 'request'; 
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-btn-request').classList.toggle('active', tab === 'request');
+    document.getElementById('tab-btn-verify').classList.toggle('active', tab === 'verify');
+    processAndRender();
+  }
+
+  function badge(status) {
+    const s = (status || '').toUpperCase();
+    if (s === 'VERIFIED' || s === 'SUCCESS') return '<span class="badge badge-success">VERIFIED</span>';
+    if (s === 'FAILED' || s === 'ERROR')     return '<span class="badge badge-error">FAILED</span>';
+    if (s === 'PROCESSING')                  return '<span class="badge badge-pending">PROCESSING</span>';
+    return `<span class="badge badge-pending">${s || 'PENDING'}</span>`;
+  }
+
+  function processAndRender() {
+    const requestRows = globalData; 
+    // verified=conversion confirmed, processing=stateCode 2 in progress, pending=OTP sent
+    const verifyRows = globalData.filter(r => r.status === 'verified' || r.status === 'failed' || r.status === 'processing');
+
+    const totalRequests = requestRows.length;
+    const uniqueMsisdn = new Set(requestRows.map(r => r.msisdn)).size;
+    const otpSent = totalRequests; // every row = OTP was sent
+
+    const pinAttempts = verifyRows.length;
+    const pinUnique = new Set(verifyRows.map(r => r.msisdn)).size;
+    const pinVerified = globalData.filter(r => r.status === 'verified').length;
+
+    document.getElementById('s-pin-requests').textContent = totalRequests;
+    document.getElementById('s-unique-msisdn').textContent = uniqueMsisdn;
+    document.getElementById('s-otp-sent').textContent = otpSent;
+    document.getElementById('s-pin-attempts').textContent = pinAttempts;
+    document.getElementById('s-pin-unique').textContent = pinUnique;
+    document.getElementById('s-pin-verified').textContent = pinVerified;
+
+    document.getElementById('count-request').textContent = totalRequests;
+    document.getElementById('count-verify').textContent = pinAttempts;
+
+    document.getElementById('et-req').textContent = totalRequests;
+    document.getElementById('et-suc').textContent = otpSent; 
+    document.getElementById('et-att').textContent = pinAttempts;
+    document.getElementById('et-ver').textContent = pinVerified;
+
+    const activeSource = currentTab === 'request' ? requestRows : verifyRows;
+    
+    const fromVal = document.getElementById('filter-from').value;
+    const toVal = document.getElementById('filter-to').value;
+    const from = fromVal ? new Date(fromVal) : null;
+    const to = toVal ? new Date(toVal + 'T23:59:59') : null;
+
+    filteredData = activeSource.filter(row => {
+      const d = new Date(row.created_at);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('tbody-logs');
+    document.getElementById('table-info-summary').textContent = `Showing ${filteredData.length} records`;
+
+    if (!filteredData.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No records found</td></tr>`;
+      return;
+    }
+
+    // 渲染列完美对齐，让 STATUS 与 RESPONSE 并列在最后两列
+    tbody.innerHTML = filteredData.map((r, i) => `
+      <tr>
+        <td style="text-align:center; color:#484f58; font-size:11px;">${filteredData.length - i}</td>
+        <td class="td-date">${formatDate(r.created_at)}</td>
+        <td class="td-telco">Etisalat</td>
+        <td class="td-msisdn">${r.msisdn || ''}</td>
+        <td class="td-uuid" style="color: #e3b341;">${r.click_id || ''}</td>
+        <td class="td-uuid">${r.txid || '-'}</td>
+        <td>${badge(r.status)}</td>
+        <td class="td-response">${r.cp_response ? escHtml(r.cp_response) : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toTimeString().slice(0, 8);
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function applyFilter() { processAndRender(); }
+  function clearFilter() {
+    document.getElementById('filter-from').value = '';
+    document.getElementById('filter-to').value = '';
+    processAndRender();
+  }
+
+  /* ── 🔌 连接 Supabase 实时接口 ── */
+  // ⚠️ 把下面两行换上你的真数据库钥匙串 
+  const SUPABASE_URL = "https://rfarxhiogiililcwqffb.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmYXJ4aGlvZ2lpbGlsY3dxZmZiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTg2MjE5MywiZXhwIjoyMDk1NDM4MTkzfQ.zMyHC6rI4AX8EZkMq-PFbFmSRy0uwYFmBT1QTKLPRhI";
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function fetchAllLogs() {
+    const { data, error } = await supabaseClient
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      globalData = data;
+      processAndRender();
+    }
+  }
+
+  function subscribeRealtime() {
+    supabaseClient
+      .channel('table-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+        fetchAllLogs();
+      })
+      .subscribe();
+  }
+
+  fetchAllLogs();
+  subscribeRealtime();
+</script>
+</body>
+</html>
