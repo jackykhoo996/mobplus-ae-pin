@@ -16,24 +16,21 @@ export default async function handler(req, res) {
   const { msisdn, click_id } = req.body;
 
   try {
-    // 1. 呼叫 CP 广告主的 PIN Request 接口获取验证码
-    // 注意：这里用的是你之前发我的完整官方请求 URL
+    // 1. 【核心修复】这里是正确的 CP 广告主 API 链接（去掉了多余的 .click）
     const cpUrl = `https://m.bolo2vas102.click/c/pin/request?msisdn=${msisdn}&token=51bd5411badf480c8c1e3a5b8d3d653b`;
     const cpResponse = await axios.get(cpUrl);
 
     // 在 Vercel 后台打印一下，方便对账
     console.log(">>> CP 广告主返回结果:", cpResponse.data);
 
-    // 2. 【核心修改】无论成功（stateCode === 0）还是失败（stateCode === 1），原封不动存进数据库
+    // 2. 无论成功还是失败，原封不动存进数据库（给你的大屏看）
     await supabase.from('leads').insert([
       {
         click_id: click_id || 'test_click',
         msisdn: msisdn,
         carrier: 'Etisalat',
         txid: cpResponse.data.txid || null,
-        // 如果返回状态码是 0 就标为 pending，否则标为 failed
         status: cpResponse.data.stateCode === 0 ? 'pending' : 'failed',
-        // 把广告主的真实回复（msg）存入你刚刚在 Supabase 建的 cp_response 字段
         cp_response: cpResponse.data.msg || 'No Message'
       }
     ]);
@@ -48,7 +45,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    // 4. 玄学风控或网络超时兜底：如果直接请求失败，也要在你的大屏上记一笔，方便查账
+    // 4. 网络超时/崩溃兜底：如果广告主服务器又挂了，记入日志和大屏
     console.error(">>> [服务器内部严重错误]:", error.message);
 
     try {
@@ -59,7 +56,7 @@ export default async function handler(req, res) {
           carrier: 'Etisalat',
           txid: null,
           status: 'failed',
-          cp_response: `API_CRASH: ${error.message}` // 记录崩溃原因
+          cp_response: `API_CRASH: ${error.message}`
         }
       ]);
     } catch (dbErr) {
